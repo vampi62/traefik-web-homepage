@@ -9,7 +9,7 @@ le site recupere les info de traefik via son api et les affiche sous forme de ta
 
 - pour les services qui respectent les conditions ci-dessus, un bloc avec le nom du service sera afficher pour y acceder et le site chargera l'icon du service et l'affichera dans le bloc
 
-![menu](https://github.com/vampi62/traefik-web-homepage/main/menu.png)
+![menu](https://github.com/vampi62/traefik-web-homepage/blob/main/menu.PNG)
 
 
 une fleche en haut a gauche permet de recharger toutes les icons des services
@@ -37,6 +37,7 @@ cd traefik-web-homepage
 ```
 dans les fichiers index.php et cron.php remplacer la variable "$traefikUrl" par l'url de votre api traefik
 
+placer le contenue du dossier html dans votre repertoire de serveur si vous n'utiliser pas docker, si vous utiliser docker aller a la section suivante pour deployer le conteneur
 
 
 ## Docker
