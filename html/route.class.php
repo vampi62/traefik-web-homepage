@@ -90,7 +90,11 @@ class Route {
 		@$doc->loadHTML($html);
 		$links = $doc->getElementsByTagName('link');
 		foreach ($links as $link) {
-			if (strpos($link->getAttribute('rel'), 'icon') !== false) {
+			if (!$link->hasAttribute('rel')) {
+				continue;
+			}
+			// contient "icon" mais pas de "-icon" ou "icon-"
+			if (strpos($link->getAttribute('rel'), 'icon') !== false && strpos($link->getAttribute('rel'), '-icon') === false && strpos($link->getAttribute('rel'), 'icon-') === false) {
 				$iconUrl = $link->getAttribute('href');
 				if (strpos($iconUrl, 'http') === false) {
 					if (substr($iconUrl, 0, 1) == '/') {
