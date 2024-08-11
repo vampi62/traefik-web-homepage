@@ -2,25 +2,32 @@
 
 require_once("route.class.php");
 
-// set the traefik ip and port
-$traefikAPIURL = "http://traefik:8080/api/";
+// read config file
+$config = json_decode(file_get_contents('config.json'), true);
 
 // Récupérer la liste des routes
-$routesList = json_decode(file_get_contents($traefikAPIURL . "http/routers"), true);
+$routesList = json_decode(file_get_contents($config['apiUrl'] . "http/routers"), true);
+
+// Récupérer la liste des middlewares
+$middlewareList = json_decode(file_get_contents($config['apiUrl'] . "http/middlewares"), true);
 
 // Récupérer la liste des entrypoints
-$entrypointsList = json_decode(file_get_contents($traefikAPIURL . "entrypoints"), true);
+$entrypointsList = json_decode(file_get_contents($config['apiUrl'] . "entrypoints"), true);
 
 $routeLinks = [];
 foreach ($routesList as $route) {
-	if ($route["provider"] == "internal") {
+	foreach ($config['exclude'] as $key => $value) {
+		if (in_array($route[$key], $value)) {
+			continue 2;
+		}
+	}
+	$routeObjet = new Route($route,$config['apiUrl']);
+	if (!$routeObjet->checkIfUserIsPermit($middlewareList,$config['middlewareNoBlock'])) {
 		continue;
 	}
-	if ($route['service'] == "webmenu") {
+	if (!$routeObjet->buildURL($entrypointsList)) {
 		continue;
 	}
-	$routeObjet = new Route($route,$traefikAPIURL);
-	$routeObjet->buildURL($entrypointsList);
 	if ($routeObjet->checkIfServiceIsUp()) {
 		$routeObjet->updateFavicon();
 	}

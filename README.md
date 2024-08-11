@@ -14,10 +14,13 @@ le site recupere les info de traefik via son api et les affiche sous forme de ta
 
 une fleche en haut a gauche permet de recharger toutes les icons des services
 
-ne fonctionne que pour les routes de type Host uniquement, sans aucune autre condition
-exemple de route:
+ne fonctionne que pour les routes de type (Host,ClientIP,PathPrefix,Query) uniquement, sans aucune autre condition
+exemple de route valide:
  - Host(`service1.yourDNS.net`)
- - Host(`service2.yourDNS.net`)
+ - Host(`yourDNS.net`) && PathPrefix(`/service1/`)
+ - (Host(`example.com`) && QueryRegexp(`mobile`, `^(true|yes)$`) && ClientIP(`192.168.1.0/24`)) || (Host(`example.com`) && Path(`/products`))
+ - (Host(`test.example.com`) && PathPrefix(`/dashboard/`)) || (Host(`test.example.com`) && PathPrefix(`/api/`))
+
 
 ## Installation
 
@@ -35,7 +38,24 @@ api:
 git clone https://github.com/vampi62/traefik-web-homepage.git
 cd traefik-web-homepage
 ```
-dans les fichiers index.php et cron.php remplacer la variable "$traefikUrl" par l'url de votre api traefik
+dans le fichier config.json
+```json
+{
+    "exclude": {
+        "provider": [
+            "internal"
+        ],
+        "service": [
+            "webmenu"
+        ]
+    },
+    "apiUrl": "http://traefik:8080/api/",
+    "middlewareNoBlock": [
+        "crowdsec@file",
+        "crowdsec@docker"
+    ]
+}
+```
 
 placer le contenue du dossier html dans votre repertoire de serveur si vous n'utiliser pas docker, si vous utiliser docker aller a la section suivante pour deployer le conteneur
 

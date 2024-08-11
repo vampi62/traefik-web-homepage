@@ -1,0 +1,15 @@
+{
+    "exclude": {
+        "provider": [
+            "internal"
+        ],
+        "service": [
+            "webmenu"
+        ]
+    },
+    "apiUrl": "http://traefik:8080/api/",
+    "middlewareNoBlock": [
+        "crowdsec@file",
+        "crowdsec@docker"
+    ]
+}
