@@ -96,6 +96,32 @@ foreach ($routesList as $route) {
 					transform: rotate(360deg);
 				}
 			}
+			@media (prefers-color-scheme: dark) {
+						body {
+							background-color: #333333;
+							color: #ffffff;
+					}
+				.tile {
+						background-color: #3c3c3c;
+						color: #f2f2f2;
+					}
+					.tile:hover {
+						background-color: #4a4a4a;
+				}
+				.tile-hs {
+						background-color: #8b3a3a;
+					}
+					.tile-hs:hover {
+						background-color: #a04545;
+					}
+				.bt-refresh {
+					background-color: #6c6c6c;
+					color: #f2f2f2;
+				}
+				.bt-refresh:hover {
+					background-color: #9d9d9d;
+				}
+			}
 		</style>
 	</head>
 	<body>
