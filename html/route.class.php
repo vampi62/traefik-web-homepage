@@ -152,6 +152,13 @@ class Route {
 								$hasWhiteListButNotPresent = false;
 							}
 						}
+					} elseif (isset($middle['ipAllowList'])) {
+						$hasWhiteListButNotPresent = true;
+						foreach ($middle['ipAllowList']['sourceRange'] as $range) { // if the client ip is in one network set in the sourceRange
+							if ($this->_ipInRange($this->_clientIp, $range)) {
+								$hasWhiteListButNotPresent = false;
+							}
+						}
 					} else {
 						$hasMiddlewareBlock = true;
 					}
