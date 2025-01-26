@@ -4,9 +4,10 @@ class Route {
 	private $_route;
 	private $_traefikURL;
 	private $_url;
+	private $_favIconURL;
 	private $_tempUrl = array();
 	private $_serviceIsUp;
-	private $_favicon;
+	private $_favIcon;
 	private $_clientIp;
 
 
@@ -94,7 +95,10 @@ class Route {
 	}
 
 	private function _checkCondition($condition) {
-		if (strpos($condition, 'Host') !== false) {
+		if (strpos($condition, 'HostSNI')  !== false) {
+			$this->_tempUrl['host'] = preg_replace('/HostSNI\(`(.*)`\)/', '$1', $condition);
+			return true;
+		} elseif (strpos($condition, 'Host') !== false) {
 			$this->_tempUrl['host'] = preg_replace('/Host\(`(.*)`\)/', '$1', $condition);
 			return true;
 		} elseif (strpos($condition, 'ClientIP') !== false) {
@@ -133,7 +137,7 @@ class Route {
 		return $result;
 	}
 
-	public function checkIfUserIsPermit($middlewareList, $middlewareNoBlock) {
+	public function checkIfUserIsPermit($middlewareList, $ignoreMiddleware) {
 		if (!isset($this->_route['middlewares'])) {
 			return true;
 		}
@@ -142,7 +146,7 @@ class Route {
 		foreach ($this->_route['middlewares'] as $middlewareName) {
 			foreach ($middlewareList as $middle) {
 				if ($middle['name'] == $middlewareName) {
-					if (in_array($middlewareName, $middlewareNoBlock)) {
+					if (in_array($middlewareName, $ignoreMiddleware)) {
 						continue;
 					}
 					if (isset($middle['ipWhiteList'])) { // if the middleware has an ipWhiteList
@@ -174,9 +178,9 @@ class Route {
 		return true;
 	}
 
-	public function checkIfServiceIsUp() {
+	public function checkIfServiceIsUp($typeRouter) {
 		if ($this->_route["provider"] == "file") {
-			$services = json_decode(file_get_contents($this->_traefikURL . "http/services/" . $this->_route["service"]), true);
+			$services = json_decode(file_get_contents($this->_traefikURL . $typeRouter . "/services/" . $this->_route["service"]), true);
 			if (isset($services['serverStatus'])) {
 				foreach ($services['serverStatus'] as $url => $status) {
 					if ($status == "UP") {
@@ -184,6 +188,9 @@ class Route {
 						return true;
 					}
 				}
+			} else {
+				$this->_serviceIsUp = true;
+				return true;
 			}
 			$this->_serviceIsUp = false;
 			return false;
@@ -193,7 +200,7 @@ class Route {
 		}
 	}
 
-	public function buildURL($entrypointsList) {
+	public function buildURL($entrypointsList, $entrypointName) {
 		$this->_url = isset($this->_route['tls']) ? 'https://' : 'http://';
 		// exemple
 		// separe les conditon en prenant en compte les parenthèses et genere un tableau
@@ -210,8 +217,8 @@ class Route {
 				// si pas de host, on prend le nom de domaine de la session
 				$this->_url .= $_SERVER['HTTP_HOST'];
 			}
-			// si l'entrypoint n'est pas websecure ou web, on ajoute l'adresse de l'entrypoint
-			if (!in_array('websecure', $this->_route['entryPoints']) && !in_array('web', $this->_route['entryPoints'])) {
+			// si l'entrypoint n'est pas a l'entrypoints pour http ou https, on ajoute l'adresse de l'entrypoint
+			if (!in_array($entrypointName['https'], $this->_route['entryPoints']) && !in_array($entrypointName['http'], $this->_route['entryPoints'])) {
 				foreach ($this->_route['entryPoints'] as $entryPoint) {
 					foreach ($entrypointsList as $entry) {
 						if ($entry['name'] == $entryPoint) {
@@ -224,6 +231,9 @@ class Route {
 			if (isset($this->_tempUrl['path'])) {
 				$this->_url .= $this->_tempUrl['path'];
 			}
+			if (strpos($this->_url, '/', strlen($this->_url) - 1) !== false) {
+				$this->_url = substr($this->_url, 0, -1);
+			}
 			if (isset($this->_tempUrl['query'])) {
 				$this->_url .= '?' . $this->_tempUrl['query'];
 			}
@@ -233,16 +243,49 @@ class Route {
 		return true;
 	}
 
+	private function _getFavIconURL($_url, $isRedirect = false) {
+		$httpSession = curl_init();
+		curl_setopt($httpSession, CURLOPT_URL, $_url);
+		curl_setopt($httpSession, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($httpSession, CURLOPT_FOLLOWLOCATION, true);
+		curl_setopt($httpSession, CURLOPT_MAXREDIRS, 10);
+		curl_setopt($httpSession, CURLOPT_TIMEOUT, 10);
+		$htmlContent = curl_exec($httpSession);
+		$this->_favIconURL = curl_getinfo($httpSession, CURLINFO_EFFECTIVE_URL);
+		if (strpos($this->_favIconURL, '/', strlen($this->_favIconURL) - 1) !== false) {
+			$this->_favIconURL = substr($this->_favIconURL, 0, -1);
+		} else {
+			$this->_favIconURL = substr($this->_favIconURL, 0, strrpos($this->_favIconURL, '/'));
+		}
+		curl_close($httpSession);
+		if (preg_match('/<meta http-equiv="refresh" content="0; url=(.*)" \/>/', $htmlContent, $matches)) {
+			$_redirectUrl = '';
+			if (strpos($matches[1], 'http') === 0) {
+				$_redirectUrl = $matches[1];
+			} else {
+				if (substr($matches[1], 0, 1) == '/') {
+					$_redirectUrl = $_url . $matches[1];
+				} else {
+					$_redirectUrl = $_url . '/' . $matches[1];
+				}
+			}
+			if ($isRedirect) {
+				return $htmlContent;
+			}
+			$htmlContent = $this->_getFavIconURL($_redirectUrl, true);
+		}
+		return $htmlContent;
+	}
+
 	private function _getFaviconOnService() {
-		$favicon = '';
 		try {
-			$html = @file_get_contents($this->_url);
+			$htmlContent = $this->_getFavIconURL($this->_url);
 		}
 		catch (Exception $e) {
-			return $this->_url . "/favicon.ico";
+			return "";
 		}
 		$doc = new DOMDocument();
-		@$doc->loadHTML($html);
+		@$doc->loadHTML($htmlContent);
 		$links = $doc->getElementsByTagName('link');
 		foreach ($links as $link) {
 			if (!$link->hasAttribute('rel')) {
@@ -251,47 +294,58 @@ class Route {
 			// contient "icon" mais pas de "-icon" ou "icon-"
 			if (strpos($link->getAttribute('rel'), 'icon') !== false && strpos($link->getAttribute('rel'), '-icon') === false && strpos($link->getAttribute('rel'), 'icon-') === false) {
 				$iconUrl = $link->getAttribute('href');
-				if (strpos($iconUrl, 'http') === false) {
-					if (substr($iconUrl, 0, 1) == '/') {
-						return $this->_url . $iconUrl;
-					} else {
-						return $this->_url . '/' . $iconUrl;
-					}
-				} else {
+				if (strpos($iconUrl, 'http') === 0) {
 					return $iconUrl;
+				} else {
+					if (substr($iconUrl, 0, 1) == '/') {
+						return $this->_favIconURL . $iconUrl;
+					} else {
+						return $this->_favIconURL . '/' . $iconUrl;
+					}
 				}
 				break;
 			}
 		}
-		return $this->_url . "/favicon.ico";
+		$_headers = @get_headers($this->_url . "/favicon.ico");
+		$_statusCode = $_headers[0] ?? '';
+		if (stripos($_statusCode, '200 OK') == true) {
+			return $this->_url . "/favicon.ico";
+		}
+		$_headers = @get_headers($this->_url . "/favicon.png");
+		$_statusCode = $_headers[0] ?? '';
+		if (stripos($_statusCode, '200 OK') == true) {
+			return $this->_url . "/favicon.png";
+		}
+		return "";
 	}
 
 	public function updateFavicon() {
-		$this->_favicon = $this->_getFaviconOnService();
-		if (@get_headers($this->_favicon)[0] != 'HTTP/1.0 200 OK') {
-			$this->_favicon = 'cache/default-favicon.ico';
-		} else {
-			$iconData = file_get_contents($this->_favicon);
-			if (pathinfo($this->_favicon, PATHINFO_EXTENSION) == 'svg' || strpos($iconData, '<svg') !== false) {
-				file_put_contents('cache/' . $this->_route['service'] . '-favicon.svg', $iconData);
-				$this->_favicon = 'cache/' . $this->_route['service'] . '-favicon.svg';
-			} else {
-				file_put_contents('cache/' . $this->_route['service'] . '-favicon.ico', $iconData);
-				$this->_favicon = 'cache/' . $this->_route['service'] . '-favicon.ico';
-			}
+		$this->_favIconURL = $this->_getFaviconOnService();
+		if ($this->_favIconURL == '') {
+			$this->_favIcon = 'cache/default-favicon.ico';
+			return;
 		}
+		$_iconData = @file_get_contents($this->_favIconURL);
+		if ($_iconData === false) {
+			$this->_favIcon = 'cache/default-favicon.ico';
+			return;
+		}
+		$_isSvg = pathinfo($this->_favIconURL, PATHINFO_EXTENSION) === 'svg' || strpos($_iconData, '<svg') !== false;
+		$_extension = $_isSvg ? 'svg' : 'ico';
+		file_put_contents('cache/' . $this->_route['service'] . '-favicon.' . $_extension, $_iconData);
+		$this->_favIcon = 'cache/' . $this->_route['service'] . '-favicon.' . $_extension;
 	}
 
 	public function checkFavicon() {
 		if (file_exists('cache/' . $this->_route['service'] . '-favicon.ico') && filesize('cache/' . $this->_route['service'] . '-favicon.ico') > 0) {
-			$this->_favicon = 'cache/' . $this->_route['service'] . '-favicon.ico';
+			$this->_favIcon = 'cache/' . $this->_route['service'] . '-favicon.ico';
 		} elseif (file_exists('cache/' . $this->_route['service'] . '-favicon.svg') && filesize('cache/' . $this->_route['service'] . '-favicon.svg') > 0) {
-			$this->_favicon = 'cache/' . $this->_route['service'] . '-favicon.svg';
+			$this->_favIcon = 'cache/' . $this->_route['service'] . '-favicon.svg';
 		} else {
 			if ($this->_serviceIsUp) {
 				$this->updateFavicon();
 			} else {
-				$this->_favicon = 'cache/default-favicon.ico';
+				$this->_favIcon = 'cache/default-favicon.ico';
 			}
 		}
 	}
@@ -299,9 +353,20 @@ class Route {
 	public function getLinkInfo() {
 		return array(
 			'name' => preg_replace('/@.*/', '', $this->_route['service']),
+			'service' => $this->_route['service'],
 			'url' => $this->_url,
 			'up' => $this->_serviceIsUp,
-			'favicon' => $this->_favicon
+			'favicon' => $this->_favIcon
 		);
+	}
+
+	public static function offlineFavicon($serviceName) {
+		if (file_exists('cache/' . $serviceName . '-favicon.ico') && filesize('cache/' . $serviceName . '-favicon.ico') > 0) {
+			return 'cache/' . $serviceName . '-favicon.ico';
+		} elseif (file_exists('cache/' . $serviceName . '-favicon.svg') && filesize('cache/' . $serviceName . '-favicon.svg') > 0) {
+			return 'cache/' . $serviceName . '-favicon.svg';
+		} else {
+			return 'cache/default-favicon.ico';
+		}
 	}
 }

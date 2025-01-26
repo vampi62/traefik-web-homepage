@@ -5,148 +5,258 @@ require_once 'route.class.php';
 // read config file
 $config = json_decode(file_get_contents('config.json'), true);
 
-// Récupérer la liste des routes
-$routesList = json_decode(file_get_contents($config['apiUrl'] . "http/routers"), true);
-
-// Récupérer la liste des middlewares
-$middlewareList = json_decode(file_get_contents($config['apiUrl'] . "http/middlewares"), true);
-
 // Récupérer la liste des entrypoints
 $entrypointsList = json_decode(file_get_contents($config['apiUrl'] . "entrypoints"), true);
 
-$routeLinks = [];
-foreach ($routesList as $route) {
-	foreach ($config['exclude'] as $key => $value) {
-		if (in_array($route[$key], $value)) {
-			continue 2;
+$services = $config["categories"]["services"];
+foreach (['http', 'tcp'] as $typeRouter) {
+	// Récupérer la liste des routes
+	$routesList = json_decode(file_get_contents($config['apiUrl'] . $typeRouter . "/routers"), true);
+	// Récupérer la liste des middlewares
+	$middlewareList = json_decode(file_get_contents($config['apiUrl'] . $typeRouter . "/middlewares"), true);
+	foreach ($routesList as $route) {
+		foreach ($config[$typeRouter]['exclude'] as $key => $value) {
+			if (in_array($route[$key], $value)) {
+				continue 2;
+			}
 		}
+		$routeObjet = new Route($route, $config['apiUrl']);
+		if (!$routeObjet->checkIfUserIsPermit($middlewareList, $config[$typeRouter]['ignoreMiddleware'])) {
+			continue;
+		}
+		if (!$routeObjet->buildURL($entrypointsList,$config['entryPointName'])) {
+			continue;
+		}
+		$routeObjet->checkIfServiceIsUp($typeRouter);
+		$routeObjet->checkFavicon();
+		$info = $routeObjet->getLinkInfo();
+		if (!isset($services[$info['service']])) {
+			$services[$info['service']] = array();
+		}
+		$services[$info['service']] = array_merge($services[$info['service']], $info);
 	}
-	$routeObjet = new Route($route,$config['apiUrl']);
-	if (!$routeObjet->checkIfUserIsPermit($middlewareList,$config['middlewareNoBlock'])) {
+}
+$categories = $config["categories"]["categories"];
+$unCategorised = array();
+foreach ($services as $key => $service) {
+	if (!isset($service['favicon'])) {
+		$services[$key]['favicon'] = Route::offlineFavicon($service['service']);
+	}
+	if (!isset($service['category'])) { // Si la catégorie n'est pas définie pour le service
+		$unCategorised[$key] = $service;
 		continue;
 	}
-	if (!$routeObjet->buildURL($entrypointsList)) {
+	if (!isset($categories[$services[$key]['category']])) { // Si la catégorie n'existe pas
+		$unCategorised[$key] = $service;
 		continue;
 	}
-	$routeObjet->checkIfServiceIsUp();
-	$routeObjet->checkFavicon();
-	$routeLinks[] = $routeObjet->getLinkInfo();
+	if (!isset($categories[$services[$key]['category']]["services"])) { // Si la catégorie n'a pas encore de services
+		$categories[$services[$key]['category']]["services"] = array();
+	}
+	$categories[$services[$key]['category']]["services"][$key] = $service;
 }
 ?>
 <!DOCTYPE html>
 <html>
-	<head>
-		<title>menu navigation</title>
-		<style type="text/css">
-			.tile-container {
-				display: flex;
-				flex-wrap: wrap;
-				justify-content: center;
+
+<head>
+	<title>menu navigation</title>
+	<style type="text/css">
+		.tile-container {
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: center;
+		}
+
+		.tile {
+			width: 200px;
+			height: 150px;
+			margin: 10px;
+			background-color: #f2f2f2;
+			text-decoration: none;
+			color: #333;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			transition: background-color 0.3s ease;
+		}
+
+		.tile:hover {
+			background-color: #e6e6e6;
+		}
+
+		.tile-content {
+			text-align: center;
+		}
+
+		.tile-hs {
+			background-color: #e77c7c;
+		}
+
+		.tile-hs:hover {
+			background-color: #e25454;
+		}
+
+		.bt-refresh {
+			position: fixed;
+			top: 20px;
+			left: 20px;
+			cursor: pointer;
+			width: 50px;
+			height: 50px;
+			background-color: #f2f2f2;
+			text-decoration: none;
+			color: #333;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			transition: background-color 0.3s ease;
+		}
+
+		.bt-refresh:hover {
+			background-color: #e6e6e6;
+		}
+
+		.animRotate {
+			animation: rotate 2s infinite linear;
+		}
+
+		@keyframes rotate {
+			from {
+				transform: rotate(0deg);
 			}
+
+			to {
+				transform: rotate(360deg);
+			}
+		}
+
+		@media (prefers-color-scheme: dark) {
+			body {
+				background-color: #333333;
+				color: #ffffff;
+			}
+
 			.tile {
-				width: 200px;
-				height: 150px;
-				margin: 10px;
-				background-color: #f2f2f2;
-				text-decoration: none;
-				color: #333;
-				display: flex;
-				justify-content: center;
-				align-items: center;
-				transition: background-color 0.3s ease;
+				background-color: #3c3c3c;
+				color: #f2f2f2;
 			}
+
 			.tile:hover {
-				background-color: #e6e6e6;
+				background-color: #4a4a4a;
 			}
-			.tile-content {
-				text-align: center;
-			}
+
 			.tile-hs {
-				background-color: #e77c7c;
+				background-color: #8b3a3a;
 			}
+
 			.tile-hs:hover {
-				background-color: #e25454;
+				background-color: #a04545;
 			}
+
 			.bt-refresh {
-				position: fixed;
-				top: 20px;
-				left: 20px;
-				cursor: pointer;
-				width: 50px;
-				height: 50px;
-				background-color: #f2f2f2;
-				text-decoration: none;
-				color: #333;
-				display: flex;
-				justify-content: center;
-				align-items: center;
-				transition: background-color 0.3s ease;
+				background-color: #6c6c6c;
+				color: #f2f2f2;
 			}
+
 			.bt-refresh:hover {
-				background-color: #e6e6e6;
+				background-color: #9d9d9d;
 			}
-			.animRotate {
-				animation: rotate 2s infinite linear;
-			}
-			@keyframes rotate {
-				from {
-					transform: rotate(0deg);
-				}
-				to {
-					transform: rotate(360deg);
-				}
-			}
-			@media (prefers-color-scheme: dark) {
-						body {
-							background-color: #333333;
-							color: #ffffff;
-					}
-				.tile {
-						background-color: #3c3c3c;
-						color: #f2f2f2;
-					}
-					.tile:hover {
-						background-color: #4a4a4a;
-				}
-				.tile-hs {
-						background-color: #8b3a3a;
-					}
-					.tile-hs:hover {
-						background-color: #a04545;
-					}
-				.bt-refresh {
-					background-color: #6c6c6c;
-					color: #f2f2f2;
-				}
-				.bt-refresh:hover {
-					background-color: #9d9d9d;
-				}
-			}
-		</style>
-	</head>
-	<body>
-		<a href="cron.php" class="bt-refresh"><img id="imgrefresh" src='cache/refresh.png' style='width: 32px; height: 32px;'></a>
-		<h1 style="text-align: center;">menu navigation</h1>
-		<div class="tile-container">
-			<?php foreach ($routeLinks as $link): ?>
-			<a href="<?= $link['url'] ?>" class="tile <?= $link['up'] ? '' : 'tile-hs' ?>">
+		}
+	</style>
+</head>
+
+<body>
+	<a href="cron.php" class="bt-refresh"><img id="imgrefresh" src='cache/refresh.png' style='width: 32px; height: 32px;'></a>
+	<h1 style="text-align: center;">menu navigation</h1>
+	<?php if ($config['enableCategories']): ?>
+	<div class="tile-container">
+		<?php foreach ($categories as $keyCat => $category):
+			if (!isset($category['services'])) {
+				continue;
+			} ?>
+			<div>
+				<div style="display: flex; flex-direction: column; color: <?= $category['color'] ?>;">
+					<div style="display: flex;">
+						<div>
+							<?= $keyCat ?>
+						</div>
+					</div>
+					<?php if (isset($category['description'])): ?>
+						<div>
+							<?= $category['description'] ?>
+						</div>
+					<?php endif; ?>
+				</div>
+				<div class="tile-container">
+					<?php foreach ($category['services'] as $keyServ => $service):
+						if (isset($service['up'])): ?>
+							<a href="<?= $service['url'] ?>" class="tile <?= $service['up'] ? '' : 'tile-hs' ?>">
+						<?php else: ?>
+							<a class="tile tile-hs">
+						<?php endif; ?>
+								<div class="tile-content">
+									<h3><?= preg_replace('/@.*/', '', $keyServ) ?></h3>
+									<img src='<?= $service['favicon'] ?>' alt='favicon' style='width: 32px; height: 32px;'>
+								</div>
+							</a>
+					<?php endforeach; ?>
+				</div>
+			</div>
+		<?php endforeach; ?>
+		<?php if (count($unCategorised) > 0): ?>
+			<div>
+				<div style="display: flex; flex-direction: column; color: <?= $config['categories']['unclassifiedColor'] ?>;">
+					<div style="display: flex;">
+						<div>
+							<?= $config['categories']['unclassifiedName'] ?>
+						</div>
+					</div>
+					<?php if (isset($config['categories']['unclassifiedDescription'])):?>
+						<div>
+							<?= $config['categories']['unclassifiedDescription'] ?>
+						</div>
+					<?php endif; ?>
+				</div>
+				<div class="tile-container">
+					<?php foreach ($unCategorised as $keyServ => $service):
+						if (isset($service['up'])): ?>
+							<a href="<?= $service['url'] ?>" class="tile <?= $service['up'] ? '' : 'tile-hs' ?>">
+						<?php else: ?>
+							<a class="tile tile-hs">
+						<?php endif; ?>
+								<div class="tile-content">
+									<h3><?= preg_replace('/@.*/', '', $keyServ) ?></h3>
+									<img src='<?= $service['favicon'] ?>' alt='favicon' style='width: 32px; height: 32px;'>
+								</div>
+							</a>
+					<?php endforeach; ?>
+				</div>
+			</div>
+		<?php endif; ?>
+	</div>
+	<?php else: ?>
+	<div class="tile-container">
+		<?php foreach ($services as $keyServ => $service):?>
+			<a href="<?= $service['url'] ?>" class="tile <?= $service['up'] ? '' : 'tile-hs' ?>">
 				<div class="tile-content">
-					<h3><?= $link['name'] ?></h3>
-					<img src='<?= $link['favicon'] ?>' alt='favicon' style='width: 32px; height: 32px;'>
+					<h3><?= preg_replace('/@.*/', '', $keyServ) ?></h3>
+					<img src='<?= $service['favicon'] ?>' alt='favicon' style='width: 32px; height: 32px;'>
 				</div>
 			</a>
-			<?php endforeach; ?>
-		</div>
-		<script>
-			document.querySelectorAll('.tile-hs').forEach(function(tile) {
-				tile.addEventListener('click', function(event) {
-					event.preventDefault();
-					alert('ce service n\'est pas disponible');
-				});
+		<?php endforeach; ?>
+	</div>
+	<?php endif; ?>
+	<script>
+		document.querySelectorAll('.tile-hs').forEach(function(tile) {
+			tile.addEventListener('click', function(event) {
+				event.preventDefault();
+				alert('ce service n\'est pas disponible');
 			});
-			document.querySelector('.bt-refresh').addEventListener('click', function(event) {
-				document.getElementById('imgrefresh').classList.add('animRotate');
-			});
-		</script>
-	</body>
+		});
+		document.querySelector('.bt-refresh').addEventListener('click', function(event) {
+			document.getElementById('imgrefresh').classList.add('animRotate');
+		});
+	</script>
+</body>
 </html>

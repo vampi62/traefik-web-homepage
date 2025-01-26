@@ -1,15 +1,94 @@
 {
-    "exclude": {
-        "provider": [
-            "internal"
-        ],
-        "service": [
-            "webmenu"
+    "apiUrl": "http://traefik:8080/api/",
+    "entryPointName": {
+        "http": "web",
+        "https": "websecure"
+    },
+    "http": {
+        "exclude": {
+            "provider": [
+                "internal"
+            ],
+            "service": [
+                "webmenu@docker",
+                "dsm-web@file",
+                "file-web@file",
+                "vpn-web@file"
+            ]
+        },
+        "ignoreMiddleware": [
+            "crowdsec@file",
+            "crowdsec@docker"
         ]
     },
-    "apiUrl": "http://traefik:8080/api/",
-    "middlewareNoBlock": [
-        "crowdsec@file",
-        "crowdsec@docker"
-    ]
+    "tcp": {
+        "exclude": {
+            "provider": [
+            ],
+            "service": [
+            ]
+        },
+        "ignoreMiddleware": [
+        ]
+    },
+    "enableCategories": true,
+    "categories": {
+        "unclassifiedName": "Unclassified",
+        "unclassifiedColor": "#000000",
+        "unclassifiedIcon": "fas fa-question",
+        "unclassifiedShowIfNoService": false,
+        "categories": {
+            "Domotique": {
+                "color": "#FF0000",
+                "icon": "fas fa-home",
+                "showIfNoService": true
+            },
+            "Download": {
+                "color": "#FFA500",
+                "icon": "fas fa-download",
+                "showIfNoService": true
+            },
+            "ERP": {
+                "color": "#FFFF00",
+                "icon": "fas fa-building",
+                "showIfNoService": true
+            },
+            "NAS": {
+                "color": "#00FF00",
+                "icon": "fas fa-hdd",
+                "showIfNoService": true
+            },
+            "IA": {
+                "color": "#00FFFF",
+                "icon": "fas fa-brain",
+                "showIfNoService": true
+            }
+        },
+        "services": {
+            "jeedom@docker": {
+                "category": "Domotique"
+            },
+            "rhasspy@docker": {
+                "category": "Domotique"
+            },
+            "transmission@file": {
+                "category": "Download"
+            },
+            "jdownloader@file": {
+                "category": "Download"
+            },
+            "grocy@docker": {
+                "category": "ERP"
+            },
+            "mmp@docker": {
+                "category": "ERP"
+            },
+            "ai@file": {
+                "category": "IA"
+            },
+            "stablediffusion@file": {
+                "category": "IA"
+            }
+        }
+    }
 }
