@@ -40,20 +40,20 @@ $categories = $config["categories"]["categories"];
 $unCategorised = array();
 foreach ($services as $key => $service) {
 	if (!isset($service['favicon'])) {
-		$services[$key]['favicon'] = Route::offlineFavicon($service['service']);
+		$service['favicon'] = Route::offlineFavicon($key);
 	}
 	if (!isset($service['category'])) { // Si la catégorie n'est pas définie pour le service
 		$unCategorised[$key] = $service;
 		continue;
 	}
-	if (!isset($categories[$services[$key]['category']])) { // Si la catégorie n'existe pas
+	if (!isset($categories[$service['category']])) { // Si la catégorie n'existe pas
 		$unCategorised[$key] = $service;
 		continue;
 	}
-	if (!isset($categories[$services[$key]['category']]["services"])) { // Si la catégorie n'a pas encore de services
-		$categories[$services[$key]['category']]["services"] = array();
+	if (!isset($categories[$service['category']]["services"])) { // Si la catégorie n'a pas encore de services
+		$categories[$service['category']]["services"] = array();
 	}
-	$categories[$services[$key]['category']]["services"][$key] = $service;
+	$categories[$service['category']]["services"][$key] = $service;
 }
 ?>
 <!DOCTYPE html>
