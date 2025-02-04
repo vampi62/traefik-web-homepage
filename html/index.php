@@ -21,12 +21,8 @@ foreach (['http', 'tcp'] as $typeRouter) {
 			}
 		}
 		$routeObjet = new Route($route, $config['apiUrl']);
-		if (!$routeObjet->checkIfUserIsPermit($middlewareList, $config[$typeRouter]['ignoreMiddleware'])) {
-			continue;
-		}
-		if (!$routeObjet->buildURL($entrypointsList,$config['entryPointName'])) {
-			continue;
-		}
+		$routeObjet->checkIfUserIsPermit($middlewareList, $config[$typeRouter]['ignoreMiddleware']);
+		$routeObjet->buildURL($entrypointsList,$config['entryPointName']);
 		$routeObjet->checkIfServiceIsUp($typeRouter);
 		$routeObjet->checkFavicon();
 		$info = $routeObjet->getLinkInfo();
@@ -174,7 +170,19 @@ foreach ($services as $key => $service) {
 		<?php foreach ($categories as $keyCat => $category):
 			if (!isset($category['services'])) {
 				continue;
-			} ?>
+			}
+			# check if a service is up and if it is permited
+			$hasServiceUp = false;
+			foreach ($category['services'] as $keyServ => $service) {
+				if ($service["isPermited"]) {
+					$hasServiceUp = true;
+					break;
+				}
+			}
+			if (!$hasServiceUp) {
+				continue;
+			}
+			?>
 			<div>
 				<div style="display: flex; flex-direction: column; color: <?= $category['color'] ?>;">
 					<div style="display: flex;">
@@ -190,6 +198,7 @@ foreach ($services as $key => $service) {
 				</div>
 				<div class="tile-container">
 					<?php foreach ($category['services'] as $keyServ => $service):
+						if ($service["isPermited"]):
 						if (isset($service['up'])): ?>
 							<a href="<?= $service['url'] ?>" class="tile <?= $service['up'] ? '' : 'tile-hs' ?>">
 						<?php else: ?>
@@ -200,11 +209,21 @@ foreach ($services as $key => $service) {
 									<img src='<?= $service['favicon'] ?>' alt='favicon' style='width: 32px; height: 32px;'>
 								</div>
 							</a>
+						<?php endif; ?>
 					<?php endforeach; ?>
 				</div>
 			</div>
 		<?php endforeach; ?>
-		<?php if (count($unCategorised) > 0): ?>
+		<?php if (count($unCategorised) > 0):
+			# check if a service is up and if it is permited
+			$hasServiceUp = false;
+			foreach ($unCategorised as $keyServ => $service) {
+				if ($service["isPermited"]) {
+					$hasServiceUp = true;
+					break;
+				}
+			}
+			if ($hasServiceUp): ?>
 			<div>
 				<div style="display: flex; flex-direction: column; color: <?= $config['categories']['unclassifiedColor'] ?>;">
 					<div style="display: flex;">
@@ -220,7 +239,8 @@ foreach ($services as $key => $service) {
 				</div>
 				<div class="tile-container">
 					<?php foreach ($unCategorised as $keyServ => $service):
-						if (isset($service['up'])): ?>
+						if ($service["isPermited"]):
+						if (isset($service['up']) && $service['urlIsFormed']): ?>
 							<a href="<?= $service['url'] ?>" class="tile <?= $service['up'] ? '' : 'tile-hs' ?>">
 						<?php else: ?>
 							<a class="tile tile-hs">
@@ -230,20 +250,26 @@ foreach ($services as $key => $service) {
 									<img src='<?= $service['favicon'] ?>' alt='favicon' style='width: 32px; height: 32px;'>
 								</div>
 							</a>
+						<?php endif; ?>
 					<?php endforeach; ?>
 				</div>
 			</div>
+			<?php endif; ?>
 		<?php endif; ?>
 	</div>
 	<?php else: ?>
 	<div class="tile-container">
-		<?php foreach ($services as $keyServ => $service):?>
-			<a href="<?= $service['url'] ?>" class="tile <?= $service['up'] ? '' : 'tile-hs' ?>">
-				<div class="tile-content">
-					<h3><?= preg_replace('/@.*/', '', $keyServ) ?></h3>
-					<img src='<?= $service['favicon'] ?>' alt='favicon' style='width: 32px; height: 32px;'>
-				</div>
-			</a>
+		<?php foreach ($services as $keyServ => $service):
+			if (isset($service['up']) && $service['urlIsFormed']): ?>
+				<a href="<?= $service['url'] ?>" class="tile <?= $service['up'] ? '' : 'tile-hs' ?>">
+			<?php else: ?>
+				<a class="tile tile-hs">
+			<?php endif; ?>
+					<div class="tile-content">
+						<h3><?= preg_replace('/@.*/', '', $keyServ) ?></h3>
+						<img src='<?= $service['favicon'] ?>' alt='favicon' style='width: 32px; height: 32px;'>
+					</div>
+				</a>
 		<?php endforeach; ?>
 	</div>
 	<?php endif; ?>

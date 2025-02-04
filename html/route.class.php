@@ -9,6 +9,8 @@ class Route {
 	private $_serviceIsUp;
 	private $_favIcon;
 	private $_clientIp;
+	private $_isPermited;
+	private $_urlIsFormed;
 
 
 	// build object
@@ -139,6 +141,7 @@ class Route {
 
 	public function checkIfUserIsPermit($middlewareList, $ignoreMiddleware) {
 		if (!isset($this->_route['middlewares'])) {
+			$this->_isPermited = true;
 			return true;
 		}
 		$hasWhiteListButNotPresent = false;
@@ -171,10 +174,13 @@ class Route {
 			}
 		}
 		if ($hasWhiteListButNotPresent) {
+			$this->_isPermited = false;
 			return false;
 		} elseif ($hasMiddlewareBlock) {
+			$this->_isPermited = false;
 			return false;
 		}
+		$this->_isPermited = true;
 		return true;
 	}
 
@@ -238,8 +244,10 @@ class Route {
 				$this->_url .= '?' . $this->_tempUrl['query'];
 			}
 		} else {
+			$this->_urlIsFormed = false;
 			return false;
 		}
+		$this->_urlIsFormed = true;
 		return true;
 	}
 
@@ -342,7 +350,7 @@ class Route {
 		} elseif (file_exists('cache/' . $this->_route['service'] . '-favicon.svg') && filesize('cache/' . $this->_route['service'] . '-favicon.svg') > 0) {
 			$this->_favIcon = 'cache/' . $this->_route['service'] . '-favicon.svg';
 		} else {
-			if ($this->_serviceIsUp) {
+			if ($this->_serviceIsUp && $this->_urlIsFormed && $this->_isPermited) {
 				$this->updateFavicon();
 			} else {
 				$this->_favIcon = 'cache/default-favicon.ico';
@@ -356,7 +364,9 @@ class Route {
 			'service' => $this->_route['service'],
 			'url' => $this->_url,
 			'up' => $this->_serviceIsUp,
-			'favicon' => $this->_favIcon
+			'favicon' => $this->_favIcon,
+			'isPermited' => $this->_isPermited,
+			'urlIsFormed' => $this->_urlIsFormed
 		);
 	}
 
