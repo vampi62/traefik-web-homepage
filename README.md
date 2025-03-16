@@ -37,8 +37,6 @@ api:
   insecure: true
 ```
 
-This exposes the API without authentication, which can be useful in development but may be a security risk in production. Consider using `api.dashboard` and configuring access restrictions in production environments.
-
 ### 2. Clone and Configure the Project
 
 To set up the project:

@@ -22,9 +22,8 @@ foreach (['http', 'tcp'] as $typeRouter) {
 		}
 		$routeObjet = new Route($route, $config['apiUrl']);
 		$routeObjet->checkIfUserIsPermit($middlewareList, $config[$typeRouter]['ignoreMiddleware']);
-		$routeObjet->buildURL($entrypointsList,$config['entryPointName']);
+		$routeObjet->buildLinkURL($entrypointsList,$config['entryPointName']);
 		$routeObjet->checkIfServiceIsUp($typeRouter);
-		$routeObjet->checkFavicon();
 		$info = $routeObjet->getLinkInfo();
 		if (!isset($services[$info['service']])) {
 			$services[$info['service']] = array();
@@ -36,7 +35,7 @@ $categories = $config["categories"]["categories"];
 $unCategorised = array();
 foreach ($services as $key => $service) {
 	if (!isset($service['favicon'])) {
-		$service['favicon'] = Route::offlineFavicon($key);
+		$service['favicon'] = Route::GetOfflineCachedFavicon($key);
 	}
 	if (!isset($service['category'])) { // Si la catégorie n'est pas définie pour le service
 		$unCategorised[$key] = $service;
@@ -163,7 +162,7 @@ foreach ($services as $key => $service) {
 </head>
 
 <body>
-	<a href="cron.php" class="bt-refresh"><img id="imgrefresh" src='cache/refresh.png' style='width: 32px; height: 32px;'></a>
+	<a class="bt-refresh"><img id="imgrefresh" src='cache/refresh.png' style='width: 32px; height: 32px;'></a>
 	<h1 style="text-align: center;">menu navigation</h1>
 	<?php if ($config['enableCategories']): ?>
 	<div class="tile-container">
@@ -204,7 +203,7 @@ foreach ($services as $key => $service) {
 						<?php else: ?>
 							<a class="tile tile-hs">
 						<?php endif; ?>
-								<div class="tile-content">
+								<div class="tile-content" id="<?= $keyServ ?>">
 									<h3><?= preg_replace('/@.*/', '', $keyServ) ?></h3>
 									<img src='<?= $service['favicon'] ?>' alt='favicon' style='width: 32px; height: 32px;'>
 								</div>
@@ -245,7 +244,7 @@ foreach ($services as $key => $service) {
 						<?php else: ?>
 							<a class="tile tile-hs">
 						<?php endif; ?>
-								<div class="tile-content">
+								<div class="tile-content" id="<?= $keyServ ?>">
 									<h3><?= preg_replace('/@.*/', '', $keyServ) ?></h3>
 									<img src='<?= $service['favicon'] ?>' alt='favicon' style='width: 32px; height: 32px;'>
 								</div>
@@ -265,7 +264,7 @@ foreach ($services as $key => $service) {
 			<?php else: ?>
 				<a class="tile tile-hs">
 			<?php endif; ?>
-					<div class="tile-content">
+					<div class="tile-content" id="<?= $keyServ ?>">
 						<h3><?= preg_replace('/@.*/', '', $keyServ) ?></h3>
 						<img src='<?= $service['favicon'] ?>' alt='favicon' style='width: 32px; height: 32px;'>
 					</div>
@@ -274,6 +273,14 @@ foreach ($services as $key => $service) {
 	</div>
 	<?php endif; ?>
 	<script>
+		function update_favicon(service, favicon) {
+			if (favicon === null) {
+				return;
+			}
+			document.getElementById(service).querySelector('img').src = favicon;
+		}
+
+
 		document.querySelectorAll('.tile-hs').forEach(function(tile) {
 			tile.addEventListener('click', function(event) {
 				event.preventDefault();
@@ -282,6 +289,41 @@ foreach ($services as $key => $service) {
 		});
 		document.querySelector('.bt-refresh').addEventListener('click', function(event) {
 			document.getElementById('imgrefresh').classList.add('animRotate');
+			//json_decode
+			fetch('reloadAll.php').then(function(response) {
+				document.getElementById('imgrefresh').classList.remove('animRotate');
+				if (!response.ok) {
+					throw new Error('HTTP error, status = ' + response.status);
+				}
+				return response.json();
+			}).then(function(json) {
+				console.log('reloadAll.php response:', json);
+				for (var service in json) {
+					update_favicon(service, json[service].favicon);
+				}
+			}).catch(function(error) {
+				document.getElementById('imgrefresh').classList.remove('animRotate');
+				console.error('fetch failed', error);
+			});
+		});
+
+		// fetch loadEmpty.php
+		document.getElementById('imgrefresh').classList.add('animRotate');
+		//json_decode
+		fetch('loadEmpty.php').then(function(response) {
+			document.getElementById('imgrefresh').classList.remove('animRotate');
+			if (!response.ok) {
+				throw new Error('HTTP error, status = ' + response.status);
+			}
+			return response.json();
+		}).then(function(json) {
+			console.log('loadEmpty.php response:', json);
+			for (var service in json) {
+				update_favicon(service, json[service].favicon);
+			}
+		}).catch(function(error) {
+			document.getElementById('imgrefresh').classList.remove('animRotate');
+			console.error('fetch failed', error);
 		});
 	</script>
 </body>

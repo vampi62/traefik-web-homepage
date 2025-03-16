@@ -8,6 +8,7 @@ $config = json_decode(file_get_contents('config.json'), true);
 // Récupérer la liste des entrypoints
 $entrypointsList = json_decode(file_get_contents($config['apiUrl'] . "entrypoints"), true);
 
+$services = [];
 foreach ([ 'http', 'tcp' ] as $typeRouter) {
 	// Récupérer la liste des routes
 	$routesList = json_decode(file_get_contents($config['apiUrl'] . $typeRouter . "/routers"), true);
@@ -23,13 +24,18 @@ foreach ([ 'http', 'tcp' ] as $typeRouter) {
 		if (!$routeObjet->checkIfUserIsPermit($middlewareList,$config[$typeRouter]['ignoreMiddleware'])) {
 			continue;
 		}
-		if (!$routeObjet->buildURL($entrypointsList,$config['entryPointName'])) {
+		if (!$routeObjet->buildLinkURL($entrypointsList,$config['entryPointName'])) {
 			continue;
 		}
 		if ($routeObjet->checkIfServiceIsUp($typeRouter)) {
 			$routeObjet->updateFavicon();
+			
 		}
+		$info = $routeObjet->getLinkInfo();
+		$services[$info['service']] = $info;
+		$services[$info['service']]['favicon'] = Route::GetOfflineCachedFavicon($info['service']);
 	}
 }
-header("Refresh: 0; URL=/");
+header('Content-Type: application/json');
+echo json_encode($services);
 ?>
