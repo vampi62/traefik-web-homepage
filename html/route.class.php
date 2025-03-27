@@ -3,6 +3,7 @@ class Route {
 
 	private $_route;
 	private $_traefikURL;
+	private $_debug;
 	private $_url;
 	private $_favIconServiceURL;
 	private $_favIconLink;
@@ -15,9 +16,10 @@ class Route {
 
 
 	// build object
-	public function __construct($route, $traefikURL) {
+	public function __construct($route, $traefikURL, $debug) {
 		$this->_route = $route;
 		$this->_traefikURL = $traefikURL;
+		$this->_debug = $debug;
 		$this->_clientIp = $this->_getIpAddress();
 	}
 
@@ -108,6 +110,9 @@ class Route {
 			return $this->_ipInRange($this->_clientIp, preg_replace('/ClientIP\(`(.*)`\)/', '$1', $condition));
 		} elseif (strpos($condition, 'PathPrefix') !== false) {
 			$this->_tempUrl['path'] = preg_replace('/PathPrefix\(`(.*)`\)/', '$1', $condition);
+			return true;
+		} elseif (strpos($condition, 'Path') !== false) {
+			$this->_tempUrl['path'] = preg_replace('/Path\(`(.*)`\)/', '$1', $condition);
 			return true;
 		} elseif (strpos($condition, 'Query') !== false) {
 			// exemple : Query(`mobile`, `true`) => $this->_tempUrl['query'] = 'mobile=true'
@@ -256,11 +261,22 @@ class Route {
 		curl_setopt($httpSession, CURLOPT_URL, $_url);
 		curl_setopt($httpSession, CURLOPT_RETURNTRANSFER, true);
 		curl_setopt($httpSession, CURLOPT_FOLLOWLOCATION, true);
+		curl_setopt($httpSession, CURLOPT_SSL_VERIFYPEER, false);
+		curl_setopt($httpSession, CURLOPT_SSL_VERIFYHOST, false);
 		curl_setopt($httpSession, CURLOPT_MAXREDIRS, 10);
 		curl_setopt($httpSession, CURLOPT_TIMEOUT, 10);
 		$htmlContent = curl_exec($httpSession);
 		$this->_favIconServiceURL = curl_getinfo($httpSession, CURLINFO_EFFECTIVE_URL);
 		$httpCode = curl_getinfo($httpSession, CURLINFO_HTTP_CODE);
+		if ($this->_debug['enabled']) {
+			if ($this->_route['service'] == $this->_debug['service']) {
+				file_put_contents('php://stderr', '_getServiceContent:' . print_r($_url, TRUE) . "\n");
+				file_put_contents('php://stderr', print_r($httpCode, TRUE) . "\n");
+				if (curl_errno($httpSession)) {
+					file_put_contents('php://stderr', print_r(curl_error($httpSession), TRUE) . "\n");
+				}
+			}
+		}
 		curl_close($httpSession);
 		if (strpos($this->_favIconServiceURL, '/', strlen($this->_favIconServiceURL) - 1) !== false) {
 			$this->_favIconServiceURL = substr($this->_favIconServiceURL, 0, -1);
@@ -293,6 +309,10 @@ class Route {
 		//$this->_url // url construite du service
 		//$this->_favIconServiceURL // url réel du service (différent de $this->_url si redirection)
 		//$this->_favIconLink // url (relative ou absolue) du favicon
+		if ($this->_debug['enabled'] && ($this->_route['service'] == $this->_debug['service'])) {
+			file_put_contents('php://stderr', '_getPictureFavicon:' . print_r($this->_favIconServiceURL, TRUE) . "\n");
+			file_put_contents('php://stderr', print_r($this->_favIconLink, TRUE) . "\n");
+		}
 		$rules = array(
 			$this->_url . "/favicon.ico",
 			$this->_url . "/favicon.png",
@@ -313,9 +333,21 @@ class Route {
 			curl_setopt($httpSession, CURLOPT_URL, $rule);
 			curl_setopt($httpSession, CURLOPT_RETURNTRANSFER, true);
 			curl_setopt($httpSession, CURLOPT_FOLLOWLOCATION, true);
+			curl_setopt($httpSession, CURLOPT_SSL_VERIFYPEER, false);
+			curl_setopt($httpSession, CURLOPT_SSL_VERIFYHOST, false);
 			curl_setopt($httpSession, CURLOPT_MAXREDIRS, 10);
 			curl_setopt($httpSession, CURLOPT_TIMEOUT, 10);
 			$data = curl_exec($httpSession);
+			$httpCode = curl_getinfo($httpSession, CURLINFO_HTTP_CODE);
+			if ($this->_debug['enabled']) {
+				if ($this->_route['service'] == $this->_debug['service']) {
+					file_put_contents('php://stderr', print_r($rule, TRUE) . "\n");
+					file_put_contents('php://stderr', print_r($httpCode, TRUE) . "\n");
+					if (curl_errno($httpSession)) {
+						file_put_contents('php://stderr', print_r(curl_error($httpSession), TRUE) . "\n");
+					}
+				}
+			}
 			$extension = curl_getinfo($httpSession, CURLINFO_CONTENT_TYPE);
 			if (strpos($extension, 'image/') === 0) {
 				// if extension is svg, we keep it as svg otherwise we keep it as ico

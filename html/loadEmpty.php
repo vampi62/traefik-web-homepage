@@ -20,7 +20,8 @@ foreach ([ 'http', 'tcp' ] as $typeRouter) {
 				continue 2;
 			}
 		}
-		$routeObjet = new Route($route,$config['apiUrl']);
+		if ($config['debug']['enabled'] && ($route['service'] == $config['debug']['service'])) {file_put_contents('php://stderr', print_r($route, TRUE));}
+		$routeObjet = new Route($route,$config['apiUrl'],$config['debug']);
 		if (!$routeObjet->checkIfUserIsPermit($middlewareList,$config[$typeRouter]['ignoreMiddleware'])) {
 			continue;
 		}
@@ -31,6 +32,7 @@ foreach ([ 'http', 'tcp' ] as $typeRouter) {
 			$routeObjet->GetCachedFavicon();
 		}
 		$info = $routeObjet->getLinkInfo();
+		if ($config['debug']['enabled'] && ($route['service'] == $config['debug']['service'])) {file_put_contents('php://stderr', print_r($info, TRUE));}
 		$services[$info['service']] = $info;
 	}
 }

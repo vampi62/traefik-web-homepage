@@ -90,5 +90,9 @@
                 "category": "IA"
             }
         }
+    },
+    "debug": {
+        "enabled": false,
+        "service": "service@provider"
     }
 }

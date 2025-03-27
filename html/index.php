@@ -20,7 +20,7 @@ foreach (['http', 'tcp'] as $typeRouter) {
 				continue 2;
 			}
 		}
-		$routeObjet = new Route($route, $config['apiUrl']);
+		$routeObjet = new Route($route, $config['apiUrl'], $config['debug']);
 		$routeObjet->checkIfUserIsPermit($middlewareList, $config[$typeRouter]['ignoreMiddleware']);
 		$routeObjet->buildLinkURL($entrypointsList,$config['entryPointName']);
 		$routeObjet->checkIfServiceIsUp($typeRouter);
@@ -297,7 +297,11 @@ foreach ($services as $key => $service) {
 				}
 				return response.json();
 			}).then(function(json) {
-				console.log('reloadAll.php response:', json);
+				<?php 
+					if ($config['debug']['enabled']) {
+						echo "console.log('reloadAll.php response:', json);";
+					}
+				?>
 				for (var service in json) {
 					update_favicon(service, json[service].favicon);
 				}
@@ -317,7 +321,11 @@ foreach ($services as $key => $service) {
 			}
 			return response.json();
 		}).then(function(json) {
-			console.log('loadEmpty.php response:', json);
+			<?php 
+				if ($config['debug']['enabled']) {
+					echo "console.log('loadEmpty.php response:', json);";
+				}
+			?>
 			for (var service in json) {
 				update_favicon(service, json[service].favicon);
 			}

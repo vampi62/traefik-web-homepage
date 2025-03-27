@@ -165,6 +165,9 @@ In the `config.json` file, configure the following options:
   - **services**: This section defines the services and their categories.
     - **jeedom@docker**: This is an example service. You can add or remove services as needed.
       - **category**: The category to which this service belongs.
+- **debug**: This option enables or disables debug mode. When enabled, additional information will be displayed in the console.
+  - **enabled**: Set this to `true` to enable debug mode.
+  - **service**: This option specifies a service to debug. If set, only information about this service will be displayed.
 
 Place the contents of the `html` folder in your server's web directory if you are not using Docker. For Docker deployment, continue to the next section.
 
