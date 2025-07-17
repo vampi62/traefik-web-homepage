@@ -11,9 +11,11 @@
             ],
             "service": [
                 "webmenu@docker",
+                "electrostoreAPI@docker",
                 "dsm-web@file",
                 "file-web@file",
-                "vpn-web@file"
+                "vpn-web@file",
+                "mta-sts@docker"
             ]
         },
         "ignoreMiddleware": [
@@ -26,6 +28,7 @@
             "provider": [
             ],
             "service": [
+                "mqtt@docker"
             ]
         },
         "ignoreMiddleware": [

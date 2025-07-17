@@ -197,7 +197,7 @@ foreach ($services as $key => $service) {
 				</div>
 				<div class="tile-container">
 					<?php foreach ($category['services'] as $keyServ => $service):
-						if ($service["isPermited"]):
+						if (isset($service["isPermited"]) && $service["isPermited"]):
 						if (isset($service['up'])): ?>
 							<a href="<?= $service['url'] ?>" class="tile <?= $service['up'] ? '' : 'tile-hs' ?>">
 						<?php else: ?>
@@ -217,7 +217,7 @@ foreach ($services as $key => $service) {
 			# check if a service is up and if it is permited
 			$hasServiceUp = false;
 			foreach ($unCategorised as $keyServ => $service) {
-				if ($service["isPermited"]) {
+				if (isset($service["isPermited"]) && $service["isPermited"]) {
 					$hasServiceUp = true;
 					break;
 				}
@@ -238,7 +238,7 @@ foreach ($services as $key => $service) {
 				</div>
 				<div class="tile-container">
 					<?php foreach ($unCategorised as $keyServ => $service):
-						if ($service["isPermited"]):
+						if (isset($service["isPermited"]) && $service["isPermited"]):
 						if (isset($service['up']) && $service['urlIsFormed']): ?>
 							<a href="<?= $service['url'] ?>" class="tile <?= $service['up'] ? '' : 'tile-hs' ?>">
 						<?php else: ?>

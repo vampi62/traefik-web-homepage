@@ -269,7 +269,7 @@ class Route {
 		$this->_favIconServiceURL = curl_getinfo($httpSession, CURLINFO_EFFECTIVE_URL);
 		$httpCode = curl_getinfo($httpSession, CURLINFO_HTTP_CODE);
 		if ($this->_debug['enabled']) {
-			if ($this->_route['service'] == $this->_debug['service']) {
+			if ($this->_route['service'] == $this->_debug['service'] || $this->_debug['service'] == '') {
 				file_put_contents('php://stderr', '_getServiceContent:' . print_r($_url, TRUE) . "\n");
 				file_put_contents('php://stderr', print_r($httpCode, TRUE) . "\n");
 				if (curl_errno($httpSession)) {
@@ -309,7 +309,7 @@ class Route {
 		//$this->_url // url construite du service
 		//$this->_favIconServiceURL // url réel du service (différent de $this->_url si redirection)
 		//$this->_favIconLink // url (relative ou absolue) du favicon
-		if ($this->_debug['enabled'] && ($this->_route['service'] == $this->_debug['service'])) {
+		if ($this->_debug['enabled'] && ($this->_route['service'] == $this->_debug['service'] || $this->_debug['service'] == '')) {
 			file_put_contents('php://stderr', '_getPictureFavicon:' . print_r($this->_favIconServiceURL, TRUE) . "\n");
 			file_put_contents('php://stderr', print_r($this->_favIconLink, TRUE) . "\n");
 		}
@@ -321,10 +321,23 @@ class Route {
 			$this->_favIconServiceURL . "/favicon.ico",
 			$this->_favIconServiceURL . "/favicon.png",
 			$this->_favIconServiceURL . "/favicon.svg",
-			$this->_favIconServiceURL . "/favicon.jpg",
-			strpos($this->_favIconLink, 'http') === 0 ? $this->_favIconLink : (strpos($this->_favIconLink, '/') === 0 ? $this->_favIconServiceURL . $this->_favIconLink : $this->_favIconServiceURL . "/" . $this->_favIconLink),
-			strpos($this->_favIconLink, 'http') === 0 ? $this->_favIconLink : (strpos($this->_favIconLink, '/') === 0 ? $this->_url . $this->_favIconLink : $this->_url . "/" . $this->_favIconLink)
+			$this->_favIconServiceURL . "/favicon.jpg"
 		);
+		if ($this->_favIconLink !== null) {
+			// si le lien du favicon est relatif, on le transforme en absolu
+			if (strpos($this->_favIconLink, 'http') === 0) {
+				$rules[] = $this->_favIconLink;
+			}
+			else {
+				if (strpos($this->_favIconLink, '/') === 0) {
+					$rules[] = $this->_favIconServiceURL . $this->_favIconLink;
+					$rules[] = $this->_url . $this->_favIconLink;
+				} else {
+					$rules[] = $this->_favIconServiceURL . '/' . $this->_favIconLink;
+					$rules[] = $this->_url . '/' . $this->_favIconLink;
+				}
+			}
+		}
 		$iconFound = false;
 		$extension = '';
 		$data = '';
@@ -340,7 +353,7 @@ class Route {
 			$data = curl_exec($httpSession);
 			$httpCode = curl_getinfo($httpSession, CURLINFO_HTTP_CODE);
 			if ($this->_debug['enabled']) {
-				if ($this->_route['service'] == $this->_debug['service']) {
+				if ($this->_route['service'] == $this->_debug['service'] || $this->_debug['service'] == '') {
 					file_put_contents('php://stderr', print_r($rule, TRUE) . "\n");
 					file_put_contents('php://stderr', print_r($httpCode, TRUE) . "\n");
 					if (curl_errno($httpSession)) {

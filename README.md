@@ -21,10 +21,10 @@ An arrow icon in the top-left corner allows you to refresh all service icons.
 the first time you access the site, it will take a few seconds to load all the icons. After that, the site will cache the icons, making subsequent loads faster.
 
 **Note:** This application only supports routes of type `Host`, `ClientIP`, `PathPrefix`, and `Query`, without additional complex conditions. Examples of valid routes include:
-- `Host(`service1.yourDNS.net`)`
-- `Host(`yourDNS.net`) && PathPrefix(`/service1/`)`
-- `(Host(`example.com`) && QueryRegexp(`mobile`, `^(true|yes)$`) && ClientIP(`192.168.1.0/24`)) || (Host(`example.com`) && Path(`/products`))`
-- `(Host(`test.example.com`) && PathPrefix(`/dashboard/`)) || (Host(`test.example.com`) && PathPrefix(`/api/`))`
+- ``Host(`service1.yourDNS.net`)``
+- ``Host(`yourDNS.net`) && PathPrefix(`/service1/`)``
+- ``(Host(`example.com`) && QueryRegexp(`mobile`, `^(true|yes)$`) && ClientIP(`192.168.1.0/24`)) || (Host(`example.com`) && Path(`/products`))``
+- ``(Host(`test.example.com`) && PathPrefix(`/dashboard/`)) || (Host(`test.example.com`) && PathPrefix(`/api/`))``
 
 ## Installation
 
@@ -169,8 +169,6 @@ In the `config.json` file, configure the following options:
   - **enabled**: Set this to `true` to enable debug mode.
   - **service**: This option specifies a service to debug. If set, only information about this service will be displayed.
 
-Place the contents of the `html` folder in your server's web directory if you are not using Docker. For Docker deployment, continue to the next section.
-
 ## Docker Deployment
 
 To run this project as a Docker container:
@@ -186,13 +184,12 @@ sudo docker run -d \
 	-l "traefik.http.routers.webmenu.tls.certresolver=myresolver" \
 	-l "traefik.http.routers.webmenu.service=webmenu@docker" \
 	-l "traefik.http.services.webmenu.loadbalancer.server.port=80" \
-	-v /html:/var/www/html \
-	php:7.4-apache
+	-v ${PWD}/html:/var/www/html \
+	php:8.4-apache
 ```
 
 ### Notes on Docker Configuration:
 - `--net traefikNetwork`: Replace `traefikNetwork` with the name of your Traefik network. This is essential for Traefik to route requests correctly.
 - Replace `yourDNS.net` with the domain you intend to use to access this application.
-- This example uses `php:7.4-apache` as the base image. Ensure that the PHP version is compatible with your project requirements.
 
 After deployment, navigate to `http://yourDNS.net` to access your Traefik web homepage and see the dynamically updated list of services available on your Traefik setup. 
