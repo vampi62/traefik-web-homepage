@@ -178,8 +178,12 @@ sudo docker run -d \
 	--net traefikNetwork \  # Replace with your Traefik network
 	--name webmenu \
 	--restart unless-stopped \
+	--read-only=true \
+	--security-opt no-new-privileges \
+	--cap-drop ALL \
+	--tmpfs /var/run/apache2 \
 	-l "traefik.enable=true" \
-	-l "traefik.http.routers.webmenu.rule=Host(`yourDNS.net`)" \ # Replace with your DNS
+	-l "traefik.http.routers.webmenu.rule=Host(\`yourDNS.net\`)" \ # Replace with your DNS
 	-l "traefik.http.routers.webmenu.entrypoints=websecure" \
 	-l "traefik.http.routers.webmenu.tls.certresolver=myresolver" \
 	-l "traefik.http.routers.webmenu.service=webmenu@docker" \
