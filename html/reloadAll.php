@@ -34,9 +34,8 @@ foreach ([ 'http', 'tcp' ] as $typeRouter) {
 		$info = $routeObjet->getLinkInfo();
 		if ($config['debug']['enabled'] && ($route['service'] == $config['debug']['service'])) {file_put_contents('php://stderr', print_r($info, TRUE));}
 		$services[$info['service']] = $info;
-		$services[$info['service']]['favicon'] = Route::GetOfflineCachedFavicon($info['service']);
+		$services[$info['service']]['favicon'] = Route::getOfflineCachedFavicon($info['service']);
 	}
 }
 header('Content-Type: application/json');
 echo json_encode($services);
-?>

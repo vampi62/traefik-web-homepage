@@ -38,4 +38,3 @@ foreach ([ 'http', 'tcp' ] as $typeRouter) {
 }
 header('Content-Type: application/json');
 echo json_encode($services);
-?>

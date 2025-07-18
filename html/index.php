@@ -173,7 +173,7 @@ foreach ($services as $key => $service) {
 			# check if a service is up and if it is permited
 			$hasServiceUp = false;
 			foreach ($category['services'] as $keyServ => $service) {
-				if ($service["isPermited"]) {
+				if (isset($service["isPermited"]) && $service["isPermited"]) {
 					$hasServiceUp = true;
 					break;
 				}
