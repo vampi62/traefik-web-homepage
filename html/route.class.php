@@ -382,19 +382,23 @@ class Route {
 			$htmlContent = $this->_getServiceContent($this->_url);
 		}
 		catch (Exception $e) {
+			file_put_contents('php://stderr', print_r("Error fetching HTML content for " . $this->_route['service'] . ": " . $e->getMessage() . "\n", true));
 			return "cache/default-favicon.ico";
 		}
-		$doc = new DOMDocument();
-		@$doc->loadHTML($htmlContent);
-		$links = $doc->getElementsByTagName('link');
-		foreach ($links as $link) {
-			if (!$link->hasAttribute('rel')) {
-				continue;
-			}
-			// contient "icon" mais pas de "-icon" ou "icon-"
-			if (strpos($link->getAttribute('rel'), 'icon') !== false && strpos($link->getAttribute('rel'), '-icon') === false && strpos($link->getAttribute('rel'), 'icon-') === false) {
-				$this->_favIconLink = $link->getAttribute('href');
-				break;
+		file_put_contents('php://stderr', print_r("HTML content length for " . $this->_route['service'] . ": " . strlen($htmlContent) . "\n", true));
+		if ($htmlContent && strlen($htmlContent) > 0) {
+			$doc = new DOMDocument();
+			@$doc->loadHTML($htmlContent);
+			$links = $doc->getElementsByTagName('link');
+			foreach ($links as $link) {
+				if (!$link->hasAttribute('rel')) {
+					continue;
+				}
+				// contient "icon" mais pas de "-icon" ou "icon-"
+				if (strpos($link->getAttribute('rel'), 'icon') !== false && strpos($link->getAttribute('rel'), '-icon') === false && strpos($link->getAttribute('rel'), 'icon-') === false) {
+					$this->_favIconLink = $link->getAttribute('href');
+					break;
+				}
 			}
 		}
 		$_icon = $this->_getPictureFavicon();
@@ -402,6 +406,7 @@ class Route {
 			file_put_contents("cache/" . $this->_route['service'] . '-favicon.' . $_icon['extension'], $_icon['data']);
 			return $this->_favIcon = "cache/" . $this->_route['service'] . '-favicon.' . $_icon['extension'];
 		}
+		return "cache/default-favicon.ico";
 	}
 
 	public function GetCachedFavicon() {
