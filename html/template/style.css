@@ -1,0 +1,112 @@
+.tile-container {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+}
+
+.tile {
+	width: 200px;
+	height: 150px;
+	margin: 10px;
+	background-color: #f2f2f2;
+	text-decoration: none;
+	color: #333;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	transition: background-color 0.3s ease;
+}
+
+.tile:hover {
+	background-color: #e6e6e6;
+}
+
+.tile-content {
+	text-align: center;
+}
+
+.tile-hs {
+	background-color: #e77c7c;
+	cursor: pointer;
+}
+
+.tile-hs:hover {
+	background-color: #e25454;
+}
+
+.favicon {
+	width: 32px;
+	height: 32px;
+}
+
+.cat-title {
+	display: flex;
+	flex-direction: column; 
+}
+
+.bt-refresh {
+	position: fixed;
+	top: 20px;
+	left: 20px;
+	cursor: pointer;
+	width: 50px;
+	height: 50px;
+	background-color: #f2f2f2;
+	text-decoration: none;
+	color: #333;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	transition: background-color 0.3s ease;
+}
+
+.bt-refresh:hover {
+	background-color: #e6e6e6;
+}
+
+.animRotate {
+	animation: rotate 2s infinite linear;
+}
+
+@keyframes rotate {
+	from {
+		transform: rotate(0deg);
+	}
+
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	body {
+		background-color: #333333;
+		color: #ffffff;
+	}
+
+	.tile {
+		background-color: #3c3c3c;
+		color: #f2f2f2;
+	}
+
+	.tile:hover {
+		background-color: #4a4a4a;
+	}
+
+	.tile-hs {
+		background-color: #8b3a3a;
+	}
+
+	.tile-hs:hover {
+		background-color: #a04545;
+	}
+
+	.bt-refresh {
+		background-color: #6c6c6c;
+		color: #f2f2f2;
+	}
+
+	.bt-refresh:hover {
+		background-color: #9d9d9d;
+	}
+}

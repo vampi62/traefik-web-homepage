@@ -9,25 +9,28 @@
             "provider": [
                 "internal"
             ],
-            "service": [
+            "router": [
                 "webmenu@docker",
                 "electrostoreAPI@docker",
                 "dsm-web@file",
                 "file-web@file",
                 "vpn-web@file",
-                "mta-sts@docker"
+                "mta-sts@docker",
+                "api@internal",
+                "acme-http-bypass@internal",
+                "ak-outpost-traefik-router@docker",
+                "dashboard@internal"
             ]
         },
         "ignoreMiddleware": [
-            "crowdsec@file",
-            "crowdsec@docker"
+            "copilotBearerAPIKEY@file"
         ]
     },
     "tcp": {
         "exclude": {
             "provider": [
             ],
-            "service": [
+            "router": [
                 "mqtt@docker"
             ]
         },
@@ -36,66 +39,66 @@
     },
     "enableCategories": true,
     "categories": {
-        "unclassifiedName": "Unclassified",
-        "unclassifiedColor": "#000000",
-        "unclassifiedIcon": "fas fa-question",
-        "unclassifiedShowIfNoService": false,
+        "unclassified": {
+            "name": "Unclassified",
+            "color": "#000000",
+            "icon": "fas fa-question",
+            "showIfNoRouter": false
+        },
         "categories": {
             "Domotique": {
                 "color": "#FF0000",
                 "icon": "fas fa-home",
-                "showIfNoService": true
+                "showIfNoRouter": true,
+                "routers": [
+                    "http-jeedom@docker",
+                    "http-rhasspy@docker"
+                ]
             },
             "Download": {
                 "color": "#FFA500",
                 "icon": "fas fa-download",
-                "showIfNoService": true
+                "showIfNoRouter": true,
+                "routers": [
+                    "http-transmission@file",
+                    "http-jdownloader@file"
+                ]
             },
             "ERP": {
                 "color": "#FFFF00",
                 "icon": "fas fa-building",
-                "showIfNoService": true
+                "showIfNoRouter": true,
+                "routers": [
+                    "http-grocy@docker",
+                    "http-mmp@docker",
+                    "http-electrostoreFRONT@docker"
+                ]
             },
             "NAS": {
                 "color": "#00FF00",
                 "icon": "fas fa-hdd",
-                "showIfNoService": true
+                "showIfNoRouter": true,
+                "routers": [
+                    "tcp-dsm-websecure@file",
+                    "tcp-file-websecure@file",
+                    "tcp-vpn-websecure@file"
+                ]
             },
             "IA": {
                 "color": "#00FFFF",
                 "icon": "fas fa-brain",
-                "showIfNoService": true
-            }
-        },
-        "services": {
-            "jeedom@docker": {
-                "category": "Domotique"
-            },
-            "rhasspy@docker": {
-                "category": "Domotique"
-            },
-            "transmission@file": {
-                "category": "Download"
-            },
-            "jdownloader@file": {
-                "category": "Download"
-            },
-            "grocy@docker": {
-                "category": "ERP"
-            },
-            "mmp@docker": {
-                "category": "ERP"
-            },
-            "ai@file": {
-                "category": "IA"
-            },
-            "stablediffusion@file": {
-                "category": "IA"
+                "showIfNoRouter": true,
+                "routers": [
+                    "http-ai@file",
+                    "http-sd-invoke@file",
+                    "http-sd-forge@file",
+                    "http-sd-a1111@file"
+                ]
             }
         }
     },
     "debug": {
         "enabled": false,
-        "service": "service@provider"
+        "router": "copilot@file"
     }
 }
