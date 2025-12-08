@@ -2,13 +2,10 @@
 class Route {
 
 	private $_route = array();
-	private $_traefikURL = "";
 	private $_traefikMiddlewarelist = array();
 	private $_configIgnoreMiddlewarelist = array();
 	private $_routerUrl = "";
 	private $_debugModule = false;
-	private $_favIconServiceURL;
-	private $_favIconLink;
 	private $_tempUrl = array(); // temp url in the build function (_checkRules and _checkCondition) and compiled in buildLinkURL
 	private $_serviceIsUp = false; // validate with function checkIfServiceIsUp, return if the service is up in traefik
 	private $_middlewareAccessValid = false; // validate with function checkIfUserIsPermit, return if user can view the router
@@ -20,7 +17,6 @@ class Route {
 	// build object
 	public function __construct(array $route, string $traefikURL, array $traefikMiddlewarelist, array $configIgnoreMiddlewarelist, bool $debugModule) {
 		$this->_route = $route;
-		$this->_traefikURL = $traefikURL;
 		$this->_traefikMiddlewarelist = $traefikMiddlewarelist;
 		$this->_configIgnoreMiddlewarelist = $configIgnoreMiddlewarelist;
 		$this->_debugModule = $debugModule;
@@ -283,11 +279,11 @@ class Route {
 	}
 
 	public function getCachedFavicon(): bool {
-		if (file_exists("cache/" . $this->_route['service'] . "-favicon.ico") && filesize("cache/" . $this->_route['service'] . "-favicon.ico") > 0) {
-			$this->_localFavIcon = "cache/" . $this->_route['service'] . "-favicon.ico";
+		if (file_exists("cache/" . $this->_route['name'] . "-favicon.ico") && filesize("cache/" . $this->_route['name'] . "-favicon.ico") > 0) {
+			$this->_localFavIcon = "cache/" . $this->_route['name'] . "-favicon.ico";
 			return true;
-		} elseif (file_exists("cache/" . $this->_route['service'] . "-favicon.svg") && filesize("cache/" . $this->_route['service'] . "-favicon.svg") > 0) {
-			$this->_localFavIcon = "cache/" . $this->_route['service'] . "-favicon.svg";
+		} elseif (file_exists("cache/" . $this->_route['name'] . "-favicon.svg") && filesize("cache/" . $this->_route['name'] . "-favicon.svg") > 0) {
+			$this->_localFavIcon = "cache/" . $this->_route['name'] . "-favicon.svg";
 			return true;
 		} else {
 			$this->_localFavIcon = "cache/default-favicon.ico";

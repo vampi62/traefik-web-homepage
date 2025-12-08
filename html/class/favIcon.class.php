@@ -1,7 +1,8 @@
 <?php
 class FavIcon {
 
-	private $_route = array();
+	private $_url;
+	private $_routeName;
 	private $_debugModule = false;
 	private $_favIconServiceURL;
 	private $_favIconLink;
@@ -35,7 +36,6 @@ class FavIcon {
 				file_put_contents('php://stderr', print_r(curl_error($httpSession), TRUE) . "\n");
 			}
 		}
-		curl_close($httpSession);
 		if (strpos($this->_favIconServiceURL, '/', strlen($this->_favIconServiceURL) - 1) !== false) {
 			$this->_favIconServiceURL = substr($this->_favIconServiceURL, 0, -1);
 		} else {
@@ -130,7 +130,6 @@ class FavIcon {
 				$iconFound = true;
 				break;
 			}
-			curl_close($httpSession);
 		}
 		return array('iconFound' => $iconFound, 'extension' => $extension, 'data' => $data);
 	}

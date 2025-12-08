@@ -1,5 +1,8 @@
 <?php
 
+// disable php Warning message
+error_reporting(E_ALL & ~E_WARNING);
+
 /* use parallel\Runtime;
 use parallel\Future;
 
