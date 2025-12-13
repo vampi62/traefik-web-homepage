@@ -201,8 +201,16 @@ sudo docker run -d \
 	php:8.5-apache
 ```
 
+add to other network if needed:
+
+```bash
+sudo docker network connect otherNetwork webmenu \  # Replace with your other network
+```bash
+
+
 ### Notes on Docker Configuration:
 - `--net traefikNetwork`: Replace `traefikNetwork` with the name of your Traefik network. This is essential for Traefik to route requests correctly.
+- Ensure that the container has access to the same network as Traefik and the hosted services to allow the application to access Traefik's API and retrieve favicons from different services.
 - Replace `yourDNS.net` with the domain you intend to use to access this application.
 
 After deployment, navigate to `http://yourDNS.net` to access your Traefik web homepage and see the dynamically updated list of routers available on your Traefik setup. 
