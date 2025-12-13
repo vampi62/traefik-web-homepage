@@ -37,7 +37,9 @@ foreach (["http", "tcp"] as $typeRouter) {
 		if (!boolval($localServiceUrl)) {
 			continue;
 		}
+		$routeObjet->getCachedFavicon();
 		$favIconUrl = null;
+		$allRouterExisting[$typeRouter . "-" . $key] = $routeObjet->getLinkInfo();
 		if (!$routeObjet->getCachedFavicon()) { // no favIconFind
 			/* // start worker findFavIcon
 			$threadFetchFavIcon[] = $runtime->run(
@@ -47,10 +49,14 @@ foreach (["http", "tcp"] as $typeRouter) {
 				},
 				[$localServiceUrl, $typeRouter, $key, $config["debug"]["enabled"] && $config["debug"]["router"] == $key]
 			); */
-			$favIcon = new FavIcon($localServiceUrl, $key, $config["debug"]["enabled"] && $config["debug"]["router"] == $key);
+			$favIcon = new FavIcon(
+				$localServiceUrl,
+				$interlnalUrlPath = $allRouterExisting[$typeRouter . "-" . $key]["internalUrlPath"],
+				$key,
+				$config["debug"]["enabled"] && $config["debug"]["router"] == $key
+			);
 			$favIconUrl = $favIcon->updateFavicon();
 		}
-		$allRouterExisting[$typeRouter . "-" . $key] = $routeObjet->getLinkInfo();
 		if (!is_null($favIconUrl)) {
 			$allRouterExisting[$typeRouter . "-" . $key]["favicon"] = $favIconUrl;
 		}

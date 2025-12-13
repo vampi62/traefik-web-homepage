@@ -50,8 +50,6 @@ class Traefik {
 			}
 		} else if (isset($services['loadBalancer']) && isset($services['loadBalancer']["servers"])) {
 			return $services['loadBalancer']["servers"][0]["url"] || "";
-		} else {
-			return "";
 		}
 		return "";
 	}

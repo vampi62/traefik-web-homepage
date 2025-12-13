@@ -10,8 +10,13 @@ class FavIcon {
 
 
 	// build object
-	public function __construct(string $url, string $routeName, bool $debugModule) {
-		$this->_url = $url;
+	public function __construct(string $url, string $internalUrlPath, string $routeName, bool $debugModule) {
+		if (strlen($internalUrlPath) > 0) {
+			$this->_url = $this->_mergeUrls($url, $internalUrlPath);
+		}
+		else {
+			$this->_url = $url;
+		}
 		$this->_routeName = $routeName;
 		$this->_debugModule = $debugModule;
 	}
@@ -46,11 +51,7 @@ class FavIcon {
 			if (strpos($matches[1], 'http') === 0) {
 				$_redirectUrl = $matches[1];
 			} else {
-				if (substr($matches[1], 0, 1) == '/') {
-					$_redirectUrl = $_url . $matches[1];
-				} else {
-					$_redirectUrl = $_url . '/' . $matches[1];
-				}
+				$_redirectUrl = $this->_mergeUrls($this->_favIconServiceURL, $matches[1]);
 			}
 			if ($retry_remaining == 0) {
 				return $htmlContent;
@@ -73,14 +74,14 @@ class FavIcon {
 			file_put_contents('php://stderr', print_r($this->_favIconLink, TRUE) . "\n");
 		}
 		$rules = array(
-			$this->_url . "/favicon.ico",
-			$this->_url . "/favicon.png",
-			$this->_url . "/favicon.svg",
-			$this->_url . "/favicon.jpg",
-			$this->_favIconServiceURL . "/favicon.ico",
-			$this->_favIconServiceURL . "/favicon.png",
-			$this->_favIconServiceURL . "/favicon.svg",
-			$this->_favIconServiceURL . "/favicon.jpg"
+			$this->_mergeUrls($this->_url, 'favicon.ico'),
+			$this->_mergeUrls($this->_url, 'favicon.png'),
+			$this->_mergeUrls($this->_url, 'favicon.svg'),
+			$this->_mergeUrls($this->_url, 'favicon.jpg'),
+			$this->_mergeUrls($this->_favIconServiceURL, 'favicon.ico'),
+			$this->_mergeUrls($this->_favIconServiceURL, 'favicon.png'),
+			$this->_mergeUrls($this->_favIconServiceURL, 'favicon.svg'),
+			$this->_mergeUrls($this->_favIconServiceURL, 'favicon.jpg')
 		);
 		if ($this->_favIconLink !== null) {
 			// si le lien du favicon est relatif, on le transforme en absolu
@@ -88,13 +89,8 @@ class FavIcon {
 				$rules[] = $this->_favIconLink;
 			}
 			else {
-				if (strpos($this->_favIconLink, '/') === 0) {
-					$rules[] = $this->_favIconServiceURL . $this->_favIconLink;
-					$rules[] = $this->_url . $this->_favIconLink;
-				} else {
-					$rules[] = $this->_favIconServiceURL . '/' . $this->_favIconLink;
-					$rules[] = $this->_url . '/' . $this->_favIconLink;
-				}
+				$rules[] = $this->_mergeUrls($this->_favIconServiceURL, $this->_favIconLink);
+				$rules[] = $this->_mergeUrls($this->_url, $this->_favIconLink);
 			}
 		}
 		$iconFound = false;
@@ -134,9 +130,16 @@ class FavIcon {
 		return array('iconFound' => $iconFound, 'extension' => $extension, 'data' => $data);
 	}
 
+	private function _mergeUrls($_base, $_relative) {
+		$parsedBase = rtrim($_base, '/');
+		$parsedRelative = ltrim($_relative, '/');
+		return $parsedBase . '/' . $parsedRelative;
+	}
+
 	public function updateFavicon() {
 		try {
 			$htmlContent = $this->_getServiceContent($this->_url);
+			file_put_contents('php://stderr', print_r("Raw content for " . $this->_routeName . ": " . $htmlContent . "\n", true));
 		}
 		catch (Exception $e) {
 			file_put_contents('php://stderr', print_r("Error fetching HTML content for " . $this->_routeName . ": " . $e->getMessage() . "\n", true));

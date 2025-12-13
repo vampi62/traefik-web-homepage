@@ -106,6 +106,9 @@ document.querySelector('.bt-refresh').addEventListener('click', function(event) 
 			console.log('reloadAll.php response:', json);
 		}
 		for (var router in json) {
+			if (json[router].favicon === null || json[router].favicon === "") {
+				continue;
+			}
 			updatefavicon(router, json[router].favicon);
 		}
 	}).catch(function(error) {
@@ -128,6 +131,9 @@ fetch('loadEmpty.php').then(function(response) {
 		console.log('loadEmpty.php response:', json);
 	}
 	for (var router in json) {
+		if (json[router].favicon === null || json[router].favicon === "") {
+			continue;
+		}
 		updatefavicon(router, json[router].favicon);
 	}
 }).catch(function(error) {

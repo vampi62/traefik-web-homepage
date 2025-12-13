@@ -9,6 +9,7 @@ class Route {
 	private $_tempUrl = array(); // temp url in the build function (_checkRules and _checkCondition) and compiled in buildLinkURL
 	private $_serviceIsUp = false; // validate with function checkIfServiceIsUp, return if the service is up in traefik
 	private $_middlewareAccessValid = false; // validate with function checkIfUserIsPermit, return if user can view the router
+	private $_internalUrlPath = "";
 	private $_localFavIcon = "";
 	private $_clientIp;
 	private $_logMessage = ["middleware" => array()];
@@ -266,9 +267,7 @@ class Route {
 			}
 			if (isset($this->_tempUrl['path'])) {
 				$this->_routerUrl .= $this->_tempUrl['path'];
-			}
-			if (strpos($this->_routerUrl, '/', strlen($this->_routerUrl) - 1) !== false) {
-				$this->_routerUrl = substr($this->_routerUrl, 0, -1);
+				$this->_internalUrlPath = $this->_tempUrl['path'];
 			}
 			if (isset($this->_tempUrl['query'])) {
 				$this->_routerUrl .= '?' . $this->_tempUrl['query'];
@@ -295,6 +294,7 @@ class Route {
 		return array(
 			'name' => preg_replace('/@.*/', '', $this->_route['name']),
 			'url' => $this->_routerUrl,
+			'internalUrlPath' => $this->_internalUrlPath,
 			'up' => $this->_serviceIsUp,
 			'favicon' => $this->_localFavIcon,
 			'isPermited' => $this->_middlewareAccessValid,

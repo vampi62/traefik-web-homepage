@@ -45,8 +45,13 @@ foreach (["http", "tcp"] as $typeRouter) {
 			},
 			[$localServiceUrl, $typeRouter, $key, $config["debug"]["enabled"] && $config["debug"]["router"] == $key]
 		); */
-		$favIcon = new FavIcon($localServiceUrl, $key, $config["debug"]["enabled"] && $config["debug"]["router"] == $key);
 		$allRouterExisting[$typeRouter . "-" . $key] = $routeObjet->getLinkInfo();
+		$favIcon = new FavIcon(
+			$localServiceUrl,
+			$allRouterExisting[$typeRouter . "-" . $key]["internalUrlPath"],
+			$key,
+			$config["debug"]["enabled"] && $config["debug"]["router"] == $key
+		);
 		$allRouterExisting[$typeRouter . "-" . $key]["favicon"] = $favIcon->updateFavicon();
 	}
 }
