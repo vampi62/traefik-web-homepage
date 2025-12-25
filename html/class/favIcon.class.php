@@ -73,16 +73,7 @@ class FavIcon {
 			file_put_contents('php://stderr', '_getPictureFavicon:' . print_r($this->_favIconServiceURL, TRUE) . "\n");
 			file_put_contents('php://stderr', print_r($this->_favIconLink, TRUE) . "\n");
 		}
-		$rules = array(
-			$this->_mergeUrls($this->_url, 'favicon.ico'),
-			$this->_mergeUrls($this->_url, 'favicon.png'),
-			$this->_mergeUrls($this->_url, 'favicon.svg'),
-			$this->_mergeUrls($this->_url, 'favicon.jpg'),
-			$this->_mergeUrls($this->_favIconServiceURL, 'favicon.ico'),
-			$this->_mergeUrls($this->_favIconServiceURL, 'favicon.png'),
-			$this->_mergeUrls($this->_favIconServiceURL, 'favicon.svg'),
-			$this->_mergeUrls($this->_favIconServiceURL, 'favicon.jpg')
-		);
+		$rules = array();
 		if ($this->_favIconLink !== null) {
 			// si le lien du favicon est relatif, on le transforme en absolu
 			if (strpos($this->_favIconLink, 'http') === 0) {
@@ -93,6 +84,16 @@ class FavIcon {
 				$rules[] = $this->_mergeUrls($this->_url, $this->_favIconLink);
 			}
 		}
+		$rules = array_merge($rules, array(
+			$this->_mergeUrls($this->_url, 'favicon.ico'),
+			$this->_mergeUrls($this->_url, 'favicon.png'),
+			$this->_mergeUrls($this->_url, 'favicon.svg'),
+			$this->_mergeUrls($this->_url, 'favicon.jpg'),
+			$this->_mergeUrls($this->_favIconServiceURL, 'favicon.ico'),
+			$this->_mergeUrls($this->_favIconServiceURL, 'favicon.png'),
+			$this->_mergeUrls($this->_favIconServiceURL, 'favicon.svg'),
+			$this->_mergeUrls($this->_favIconServiceURL, 'favicon.jpg')
+		));
 		$iconFound = false;
 		$extension = '';
 		$data = '';
@@ -150,15 +151,35 @@ class FavIcon {
 			$doc = new DOMDocument();
 			@$doc->loadHTML($htmlContent);
 			$links = $doc->getElementsByTagName('link');
+			$selectedIcon = array();
+			
 			foreach ($links as $link) {
 				if (!$link->hasAttribute('rel')) {
 					continue;
 				}
-				// contient "icon" mais pas de "-icon" ou "icon-"
-				if (strpos($link->getAttribute('rel'), 'icon') !== false && strpos($link->getAttribute('rel'), '-icon') === false && strpos($link->getAttribute('rel'), 'icon-') === false) {
-					$this->_favIconLink = $link->getAttribute('href');
-					break;
+				$rel = $link->getAttribute('rel');
+				
+				// Accepte les rel contenant "icon" (sauf "-icon" ou "icon-") ou "apple-touch-icon"
+				$isIcon = strpos($rel, 'icon') !== false && strpos($rel, '-icon') === false && strpos($rel, 'icon-') === false;
+				$isAppleTouchIcon = strpos($rel, 'apple-touch-icon') !== false;
+				
+				if ($isIcon || $isAppleTouchIcon) {
+					$size = 0;
+					if ($link->hasAttribute('sizes')) {
+						$sizes = $link->getAttribute('sizes');
+						// Parse sizes comme "32x32" ou "any"
+						if ($sizes !== 'any' && preg_match('/(\d+)x(\d+)/', $sizes, $matches)) {
+							$size = (int)$matches[1]; // On prend la largeur
+						}
+					}
+					if ($selectedIcon == null || $size > $selectedIcon['size']) {
+						$selectedIcon = array('size' => $size, 'href' => $link->getAttribute('href'));
+					}
 				}
+			}
+			file_put_contents('php://stderr', print_r("Selected icon for " . $this->_routeName . ": " . print_r($selectedIcon, true) . "\n", true));
+			if (!empty($selectedIcon)) {
+				$this->_favIconLink = $selectedIcon['href'];
 			}
 		}
 		$_icon = $this->_getPictureFavicon();
